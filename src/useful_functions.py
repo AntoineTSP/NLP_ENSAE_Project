@@ -5,6 +5,16 @@ import json
 import yaml
 import re
 import matplotlib.pyplot as plt
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import StandardScaler, OrdinalEncoder
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.inspection import permutation_importance
+import time
 
 # Create empty dictionary but with correct shape
 def empty_dict(tokens):
@@ -100,4 +110,33 @@ def plot_pie_chart(df, features, title, manuel_label=None, labels=None):
         plt.pie(category_counts, labels=category_counts.index, autopct='%1.1f%%', startangle=140)
     plt.title(title)
     plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.show()
+
+def get_report(clf, X_train_enc, X_test_enc,  y_train_enc, y_test_enc, description_features_string, description_features_num, target_features):
+    start = time.time()
+    y_pred = clf.predict(X_test_enc)
+    stop = time.time()
+    print(f"Inference Time: {round(stop - start,3)}s")
+    print("Notre accuracy de test est de : " + str(accuracy_score(y_test_enc, y_pred)))
+
+    print("Classification report")
+    print(classification_report(y_test_enc, y_pred, zero_division=0.))
+
+    disp = ConfusionMatrixDisplay.from_predictions(y_test_enc, y_pred)
+    fig = disp.figure_
+    fig.set_figwidth(5)
+    fig.set_figheight(5) 
+    fig.show()
+
+    #Let's find our which features contributes the most to the diagnosis
+    result = permutation_importance(
+        clf, X_test_enc, y_test_enc, n_repeats=10, random_state=42, n_jobs=2)
+    forest_importances = pd.Series(result.importances_mean,
+                                    index=description_features_num+
+                                   description_features_string)
+    fig, ax = plt.subplots()
+    forest_importances.plot.bar(yerr=result.importances_std, ax=ax)
+    ax.set_title("Feature importances using permutation on full model")
+    ax.set_ylabel("Mean accuracy decrease")
+    fig.tight_layout()
     plt.show()
