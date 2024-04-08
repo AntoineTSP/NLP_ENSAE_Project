@@ -132,6 +132,7 @@ def get_report(clf, X_train_enc, X_test_enc,  y_train_enc, y_test_enc, descripti
     fig = disp.figure_
     fig.set_figwidth(5)
     fig.set_figheight(5) 
+    plt.savefig("Confusion_matrix.png")
     fig.show()
 
     #Let's find our which features contributes the most to the diagnosis
@@ -142,9 +143,10 @@ def get_report(clf, X_train_enc, X_test_enc,  y_train_enc, y_test_enc, descripti
                                    description_features_string)
     fig, ax = plt.subplots()
     forest_importances.plot.bar(yerr=result.importances_std, ax=ax)
-    ax.set_title("Feature importances using permutation on full model")
+    ax.set_title("Feature importances")
     ax.set_ylabel("Mean accuracy decrease")
     fig.tight_layout()
+    plt.savefig("Feature_importances.png")
     plt.show()
 
 def get_report_hugging_face_model(device, model, tokenizer, X_test, y_test):
