@@ -87,8 +87,8 @@ def plot_histogramm(df, features):
     # Plot histogram with percentages
     plt.hist(list_age, bins=10, color='skyblue', edgecolor='black')
     plt.xlabel('Age')
-    plt.ylabel('Percentage')
-    plt.title('Distribution of Age')
+    plt.ylabel('Effectif')
+    plt.title('Pyramide des âges')
     plt.grid(True)
     
     # Calculate the percentage values
@@ -99,7 +99,8 @@ def plot_histogramm(df, features):
     # Show the percentages on top of each bar
     for i in range(len(bins) - 1):
         plt.text(bins[i] + 5, counts[i] , f'{percentage[i]:.1f}%', ha='center', va='bottom')
-    
+
+    plt.savefig("histo.png")
     plt.show()
 
 def plot_pie_chart(df, features, title, manuel_label=None, labels=None):
@@ -114,6 +115,7 @@ def plot_pie_chart(df, features, title, manuel_label=None, labels=None):
         plt.pie(category_counts, labels=category_counts.index, autopct='%1.1f%%', startangle=140)
     plt.title(title)
     plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.savefig(title + ".png")
     plt.show()
 
 def get_report(clf, X_train_enc, X_test_enc,  y_train_enc, y_test_enc, description_features_string, description_features_num, target_features):
