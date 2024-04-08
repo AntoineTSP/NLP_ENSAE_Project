@@ -16,6 +16,10 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, classificat
 from sklearn.inspection import permutation_importance
 import time
 
+import torch
+from transformers import BertTokenizer, BertForSequenceClassification
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler
+
 # Create empty dictionary but with correct shape
 def empty_dict(tokens):
     dico = {}
@@ -140,3 +144,44 @@ def get_report(clf, X_train_enc, X_test_enc,  y_train_enc, y_test_enc, descripti
     ax.set_ylabel("Mean accuracy decrease")
     fig.tight_layout()
     plt.show()
+
+def get_report_hugging_face_model(device, model, tokenizer, X_test, y_test):
+    # Preprocess the test data
+    tokenized_texts_test = tokenizer(np.array(X_test).tolist(), padding=True, truncation=True, return_tensors='pt', max_length=512, add_special_tokens=True)
+    labels_test = torch.tensor(np.array(y_test))
+    
+    # Create DataLoader for the test dataset
+    test_dataset = TensorDataset(tokenized_texts_test['input_ids'], tokenized_texts_test['attention_mask'], labels_test)
+    test_dataloader = DataLoader(test_dataset, batch_size=4)
+    
+    # Evaluate the model
+    model.eval()
+    predicted_labels = []
+    true_labels = []
+    
+    start = time.time()
+    for batch in test_dataloader:
+        batch = tuple(t.to(device) for t in batch)
+        inputs = {'input_ids': batch[0], 'attention_mask': batch[1]}
+        with torch.no_grad():
+            outputs = model(**inputs)
+        logits = outputs.logits
+        predicted_labels.extend(torch.argmax(logits, dim=1).cpu().numpy())
+        true_labels.extend(batch[2].cpu().numpy())
+    
+    stop = time.time()
+    print(f"Inference time: {round(stop - start,3)}s")
+    
+    # Calculate evaluation metrics
+    accuracy = accuracy_score(true_labels, predicted_labels)
+    print("Accuracy:", accuracy)
+    
+    print("Classification report")
+    print(classification_report(true_labels, predicted_labels, zero_division=0.))
+    
+    disp = ConfusionMatrixDisplay.from_predictions(true_labels, predicted_labels)
+    fig = disp.figure_
+    fig.set_figwidth(5)
+    fig.set_figheight(5) 
+    fig.show()
+
